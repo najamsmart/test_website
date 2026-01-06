@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fine Calculation</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.dashboard {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 25px;
+}
+
+.sidebar {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar a {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #f1f1f1;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sidebar a:hover {
+  background: #dce1ff;
+}
+
+.admin-info {
+  font-size: 12px;
+  color: #555;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.full {
+  grid-column: span 2;
+}
+
+.chart-box {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <h1>LIBRARY MANAGEMENT SYSTEM</h1>
+    <h2>Fine Calculation</h2>
+    <p>Regression Testing Module</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:25px;">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div>
+        <h3>Navigation</h3>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="fine.html">Fine Calculation</a>
+        <a href="index.html">Logout</a>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="login-box">
+      <h3>Calculate Fine</h3>
+      <input type="number" id="days" placeholder="Days Late">
+      <button onclick="calculateFine()">Calculate</button>
+      <p id="fineResult"></p>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function calculateFine() {
+  let days = document.getElementById("days").value;
+  document.getElementById("fineResult").innerText =
+    "Fine = Rs. " + (days * 10);
+}
+</script>
+
+</body>
+</html>

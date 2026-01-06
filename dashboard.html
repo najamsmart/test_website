@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LMS Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.dashboard {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 25px;
+}
+
+.sidebar {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar a {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #f1f1f1;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sidebar a:hover {
+  background: #dce1ff;
+}
+
+.admin-info {
+  font-size: 12px;
+  color: #555;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.full {
+  grid-column: span 2;
+}
+
+.chart-box {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>LIBRARY MANAGEMENT SYSTEM</h1>
+    <h2>Dashboard</h2>
+    <p>Overview & Analytics</p>
+  </div>
+
+  <div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div>
+        <h3>Navigation</h3>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="fine.html">Fine Calculation</a>
+        <a href="index.html">Logout</a>
+      </div>
+
+      <div class="admin-info">
+        <b>Admin:</b> admin<br>
+        <span id="date"></span>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- SEARCH -->
+      <div class="login-box">
+        <h3>Search Book</h3>
+        <input type="text" id="search" placeholder="Book Title">
+        <button onclick="searchBook()">Search</button>
+        <p id="searchResult"></p>
+      </div>
+
+      <!-- BORROW -->
+      <div class="login-box">
+        <h3>Borrow Book</h3>
+        <input type="number" id="borrowId" placeholder="Book ID">
+        <button onclick="borrowBook()">Borrow</button>
+        <p id="borrowResult"></p>
+      </div>
+
+      <!-- RETURN -->
+      <div class="login-box full">
+        <h3>Return Book</h3>
+        <input type="number" id="returnId" placeholder="Book ID">
+        <button onclick="returnBook()">Return</button>
+        <p id="returnResult"></p>
+      </div>
+
+      <!-- BAR CHART -->
+      <div class="chart-box">
+        <h3 style="text-align:center;">Book Status (By Book ID)</h3>
+        <canvas id="bookChart"></canvas>
+      </div>
+
+      <!-- PIE CHART -->
+      <div class="chart-box">
+        <h3 style="text-align:center;">Availability Summary</h3>
+        <canvas id="pieChart"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* DATE */
+document.getElementById("date").innerText = new Date().toDateString();
+
+/* BOOK DATA */
+let books = {
+  101: { title: "Python", available: true },
+  102: { title: "Java", available: false },
+  103: { title: "AI Basics", available: true }
+};
+
+/* SEARCH */
+function searchBook() {
+  let q = search.value.toLowerCase();
+  for (let id in books) {
+    if (books[id].title.toLowerCase().includes(q)) {
+      searchResult.innerText = "Book found: " + books[id].title;
+      return;
+    }
+  }
+  searchResult.innerText = "Book not found";
+}
+
+/* BORROW */
+function borrowBook() {
+  let id = borrowId.value;
+  if (books[id] && books[id].available) {
+    books[id].available = false;
+    borrowResult.innerText = "Borrowed successfully";
+    updateCharts();
+  } else {
+    borrowResult.innerText = "Book not available";
+  }
+}
+
+/* RETURN */
+function returnBook() {
+  let id = returnId.value;
+  if (books[id]) {
+    books[id].available = true;
+    returnResult.innerText = "Returned & inventory updated";
+    updateCharts();
+  }
+}
+
+/* BAR CHART */
+const barCtx = document.getElementById("bookChart").getContext("2d");
+let barChart = new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: Object.keys(books),
+    datasets: [{
+      label: 'Book Status',
+      data: Object.values(books).map(b => b.available ? 1 : 0),
+      backgroundColor: Object.values(books).map(b =>
+        b.available ? '#4caf50' : '#ff5252'
+      )
+    }]
+  },
+  options: {
+    scales: {
+      y: {
+        min: 0,
+        max: 1,
+        ticks: {
+          callback: v => v === 1 ? 'Available' : 'Borrowed'
+        }
+      }
+    }
+  }
+});
+
+/* PIE CHART */
+const pieCtx = document.getElementById("pieChart").getContext("2d");
+let pieChart = new Chart(pieCtx, {
+  type: 'pie',
+  data: {
+    labels: ['Available', 'Borrowed'],
+    datasets: [{
+      data: getAvailabilityCount(),
+      backgroundColor: ['#4caf50', '#ff5252']
+    }]
+  }
+});
+
+/* HELPERS */
+function getAvailabilityCount() {
+  let available = 0, borrowed = 0;
+  for (let id in books) {
+    books[id].available ? available++ : borrowed++;
+  }
+  return [available, borrowed];
+}
+
+/* UPDATE BOTH CHARTS */
+function updateCharts() {
+  barChart.data.datasets[0].data =
+    Object.values(books).map(b => b.available ? 1 : 0);
+  barChart.data.datasets[0].backgroundColor =
+    Object.values(books).map(b => b.available ? '#4caf50' : '#ff5252');
+  barChart.update();
+
+  pieChart.data.datasets[0].data = getAvailabilityCount();
+  pieChart.update();
+}
+</script>
+
+</body>
+</html>
