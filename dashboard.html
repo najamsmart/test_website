@@ -48,6 +48,7 @@
 .admin-info {
   font-size: 12px;
   color: #555;
+  text-align: center;
 }
 
 .content {
@@ -66,6 +67,21 @@
   border-radius: 14px;
   box-shadow: 0 15px 30px rgba(0,0,0,0.25);
 }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+table th, table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+table th {
+  background: #f1f1f1;
+}
 </style>
 </head>
 
@@ -75,7 +91,7 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>LIBRARY MANAGEMENT SYSTEM</h1>
+    <h1>LIBRARY MANAGEMENT SYSTEM (LMS)</h1>
     <h2>Dashboard</h2>
     <p>Overview & Analytics</p>
   </div>
@@ -111,7 +127,7 @@
       <!-- BORROW -->
       <div class="login-box">
         <h3>Borrow Book</h3>
-        <input type="number" id="borrowId" placeholder="Book ID">
+        <input type="number" id="borrowId" placeholder="Book ID (1–10)">
         <button onclick="borrowBook()">Borrow</button>
         <p id="borrowResult"></p>
       </div>
@@ -119,7 +135,7 @@
       <!-- RETURN -->
       <div class="login-box full">
         <h3>Return Book</h3>
-        <input type="number" id="returnId" placeholder="Book ID">
+        <input type="number" id="returnId" placeholder="Book ID (1–10)">
         <button onclick="returnBook()">Return</button>
         <p id="returnResult"></p>
       </div>
@@ -136,20 +152,41 @@
         <canvas id="pieChart"></canvas>
       </div>
 
+      <!-- BOOK TABLE -->
+      <div class="chart-box full">
+        <h3 style="text-align:center;">Complete Book Inventory</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Book ID</th>
+              <th>Book Name</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="bookTable"></tbody>
+        </table>
+      </div>
+
     </div>
   </div>
-
 </div>
 
 <script>
 /* DATE */
 document.getElementById("date").innerText = new Date().toDateString();
 
-/* BOOK DATA */
+/* BOOK DATA (1–10) */
 let books = {
-  101: { title: "Python", available: true },
-  102: { title: "Java", available: false },
-  103: { title: "AI Basics", available: true }
+  1: { title: "Python Programming", available: true },
+  2: { title: "Java Fundamentals", available: true },
+  3: { title: "AI Basics", available: false },
+  4: { title: "Machine Learning", available: true },
+  5: { title: "Deep Learning", available: false },
+  6: { title: "Data Structures", available: true },
+  7: { title: "Algorithms", available: true },
+  8: { title: "Software Engineering", available: false },
+  9: { title: "Database Systems", available: true },
+  10:{ title: "Operating Systems", available: true }
 };
 
 /* SEARCH */
@@ -170,7 +207,7 @@ function borrowBook() {
   if (books[id] && books[id].available) {
     books[id].available = false;
     borrowResult.innerText = "Borrowed successfully";
-    updateCharts();
+    updateUI();
   } else {
     borrowResult.innerText = "Book not available";
   }
@@ -182,70 +219,96 @@ function returnBook() {
   if (books[id]) {
     books[id].available = true;
     returnResult.innerText = "Returned & inventory updated";
-    updateCharts();
+    updateUI();
   }
 }
 
 /* BAR CHART */
-const barCtx = document.getElementById("bookChart").getContext("2d");
-let barChart = new Chart(barCtx, {
-  type: 'bar',
-  data: {
-    labels: Object.keys(books),
-    datasets: [{
-      label: 'Book Status',
-      data: Object.values(books).map(b => b.available ? 1 : 0),
-      backgroundColor: Object.values(books).map(b =>
-        b.available ? '#4caf50' : '#ff5252'
-      )
-    }]
-  },
-  options: {
-    scales: {
-      y: {
-        min: 0,
-        max: 1,
-        ticks: {
-          callback: v => v === 1 ? 'Available' : 'Borrowed'
+const barChart = new Chart(
+  document.getElementById("bookChart"),
+  {
+    type: "bar",
+    data: {
+      labels: Object.keys(books),
+      datasets: [{
+        label: "Book Status (1 = Available)",
+        data: Object.values(books).map(b => b.available ? 1 : 0),
+        backgroundColor: Object.values(books).map(b =>
+          b.available ? "#4caf50" : "#ff5252"
+        )
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          min: 0,
+          max: 1,
+          ticks: {
+            callback: v => v === 1 ? "Available" : "Borrowed"
+          }
         }
       }
     }
   }
-});
+);
 
 /* PIE CHART */
-const pieCtx = document.getElementById("pieChart").getContext("2d");
-let pieChart = new Chart(pieCtx, {
-  type: 'pie',
-  data: {
-    labels: ['Available', 'Borrowed'],
-    datasets: [{
-      data: getAvailabilityCount(),
-      backgroundColor: ['#4caf50', '#ff5252']
-    }]
+const pieChart = new Chart(
+  document.getElementById("pieChart"),
+  {
+    type: "pie",
+    data: {
+      labels: ["Available", "Borrowed"],
+      datasets: [{
+        data: getAvailabilityCount(),
+        backgroundColor: ["#4caf50", "#ff5252"]
+      }]
+    }
   }
-});
+);
 
 /* HELPERS */
 function getAvailabilityCount() {
-  let available = 0, borrowed = 0;
+  let a = 0, b = 0;
   for (let id in books) {
-    books[id].available ? available++ : borrowed++;
+    books[id].available ? a++ : b++;
   }
-  return [available, borrowed];
+  return [a, b];
 }
 
-/* UPDATE BOTH CHARTS */
-function updateCharts() {
+/* TABLE */
+function renderTable() {
+  let tbody = document.getElementById("bookTable");
+  tbody.innerHTML = "";
+
+  for (let id in books) {
+    tbody.innerHTML += `
+      <tr>
+        <td>${id}</td>
+        <td>${books[id].title}</td>
+        <td style="font-weight:600;color:${books[id].available ? 'green' : 'red'}">
+          ${books[id].available ? "Available" : "Borrowed"}
+        </td>
+      </tr>`;
+  }
+}
+
+/* UPDATE ALL */
+function updateUI() {
   barChart.data.datasets[0].data =
     Object.values(books).map(b => b.available ? 1 : 0);
   barChart.data.datasets[0].backgroundColor =
-    Object.values(books).map(b => b.available ? '#4caf50' : '#ff5252');
+    Object.values(books).map(b => b.available ? "#4caf50" : "#ff5252");
   barChart.update();
 
   pieChart.data.datasets[0].data = getAvailabilityCount();
   pieChart.update();
+
+  renderTable();
 }
+
+/* INITIAL LOAD */
+renderTable();
 </script>
 
 </body>
